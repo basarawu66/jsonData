@@ -1,0 +1,119 @@
+﻿<!DOCTYPE html>
+<html xmlns="http://www.w3.org/1999/xhtml">
+<head>
+    <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+    <title></title>
+    <link href="Content/slick.grid.css" rel="stylesheet" />
+    <link href="Content/slick-default-theme.css" rel="stylesheet" />
+</head>
+<body>
+    <input type="checkbox" id="chkData1" name="chk" value="https://raw.githubusercontent.com/basarawu66/jsonData/master/test1/data1.json" /> 資料來源1 &nbsp;(此資料來源真實有資料)&nbsp;<a href="https://raw.githubusercontent.com/basarawu66/jsonData/master/test1/data1.json" target="_blank">查看資料</a> <br />
+    <input type="checkbox" id="chkData2" name="chk" value="https://raw.githubusercontent.com/basarawu66/jsonData/master/test1/data2.json" /> 資料來源2 &nbsp;(錯誤的位址)&nbsp;<a href="https://raw.githubusercontent.com/basarawu66/jsonData/master/test1/data2.json">查看資料</a><p></p>
+
+    <input type="button" id="btnSearch" value="正確查詢" />&nbsp;<span>(input[name=chk]:checked)</span><p></p>
+    <input type="button" id="btnSearchERR" value="錯誤查詢" />&nbsp;<span>(input[name=chk][checked])</span><p></p>
+    <div id="myGrid" style="width:100%;height:600px;"></div>
+
+    <script src="Scripts/jquery-1.7.js"></script>
+    <script src="Scripts/jquery.event.drag.js"></script>
+    <script src="Scripts/SlickGrid/slick.core.js"></script>
+    <script src="Scripts/SlickGrid/slick.grid.js"></script>
+
+    <script>
+
+        function initGrid(Data) {
+
+            var grid,
+             columns = [
+               { id: "Name", name: "Name", field: "Name", width: 240, sortable: true },
+               { id: "Age", name: "Age", field: "Age", width: 240, sortable: true }
+             ],
+             options = {
+                 enableCellNavigation: false,
+                 enableColumnReorder: false
+             };
+            grid = new Slick.Grid("#myGrid", Data, columns, options);
+            grid.onSort.subscribe(function (e, args) { // ar  var cols = args.sortCols;]
+                //thisGrid.grid.customSort(args);
+                //grid.setSortColumn(args.sortCol.id, args.sortAsc);
+                gridSorter(args.sortCol.field, args.sortAsc, grid, grid.getData());
+
+            });
+
+
+        }
+
+        var gridSorter = function (columnField, isAsc, grid, gridData) {
+            var sign = isAsc ? 1 : -1;
+            var field = columnField
+            gridData.sort(function (dataRow1, dataRow2) {
+                var value1 = dataRow1[field], value2 = dataRow2[field];
+                var result = (value1 == value2) ? 0 :
+                           ((value1 > value2 ? 1 : -1)) * sign;
+                return result;
+            });
+            grid.invalidate();
+            grid.render();
+        }
+        $().ready(function () {
+            $("#btnSearch").bind("click", function () {
+                var chk = $("input[name=chk]:checked");//$("input:checkbox[name=chk]:checked");
+                SearchButton_Click(chk);
+            })
+
+            $("#btnSearchERR").bind("click", function () {
+                var chk = $("input[name=chk][checked]");
+                SearchButton_Click(chk);
+            })
+        })
+
+        function SearchButton_Click(chk) {
+            var Options = {};
+            $("#myGrid").empty();
+            //alert("checkbox length:" + $("input:checkbox").length);
+            if (chk.length == 0) {
+                alert("請選擇一個資料來源!");
+                return;
+            }
+            if (chk.length > 1) {
+                alert("只可選擇一個資料來源!");
+                return;
+            }
+            Options = {
+                url: chk.val(),
+                dataType: "json"
+            }
+            GetData(Options, function (err, Data) {
+
+                if (err) {
+                    console.log("Error==>", err);
+                    return;
+                }
+                console.log("Result Data==>", Data);
+                initGrid(Data);
+            })
+        }
+
+        function GetData(Options, Cb) {
+            //{
+            //    url: "https://raw.githubusercontent.com/basarawu66/jsonData/master/test1/data1.json",
+            //    dataType: "json"
+            //}
+            $.ajax(Options)
+            .done(function (data) {
+                if (console && console.log) {
+                    console.log("Sample of data:", data);
+                    Cb(null, data);
+                }
+            })
+            .fail(function (err) {
+                if (console && console.log) {
+                    console.log("fail:", err);
+                    alert("讀取資料錯誤,\r錯誤狀態:" + err.status +",\r錯誤訊息:" + err.responseText);
+                    Cb(err);
+                }
+            })
+        }
+    </script>
+</body>
+</html>
